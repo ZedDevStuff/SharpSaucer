@@ -6,6 +6,16 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- NuGet Metadata -->
+  <PropertyGroup>
+    <PackageId>SharpSaucer</PackageId>
+    <Version>8.0.4</Version>
+    <Authors>ZedDevStuff</Authors>
+    <Product>SharpSaucer</Product>
+    <Description>C# bindings for the cross platform C++ WebVeiw library Saucer</Description>
+    <PackageTags></PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="runtimes/**" Link="runtimes/%(RecursiveDir)/%(Filename)%(Extension)">
       <PackagePath>runtimes/</PackagePath>
