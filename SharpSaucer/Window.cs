@@ -13,7 +13,6 @@ namespace SharpSaucer;
 public sealed class Window : IDisposable
 {
     private nint _handle;
-    private bool _disposed;
     private bool _disposedValue;
 
     // prevent GC of delegates passed to native code
@@ -31,7 +30,7 @@ public sealed class Window : IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            ObjectDisposedException.ThrowIf(_disposedValue, this);
             return _handle;
         }
     }

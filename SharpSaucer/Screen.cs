@@ -10,14 +10,14 @@ namespace SharpSaucer;
 public sealed class Screen : IDisposable
 {
     private nint _handle;
-    private bool _disposed;
+    private bool _disposedValue;
 
     /// <summary>The underlying native handle.</summary>
     public nint Handle
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            ObjectDisposedException.ThrowIf(_disposedValue, this);
             return _handle;
         }
     }
@@ -65,18 +65,31 @@ public sealed class Screen : IDisposable
         }
     }
 
-    // ── IDisposable ─────────────────────────────
-
-    public void Dispose()
+    private void Dispose(bool disposing)
     {
-        if (_disposed) return;
-        _disposed = true;
-        if (_handle != 0)
+        if (!_disposedValue)
         {
-            Bindings.saucer_screen_free(_handle);
-            _handle = 0;
+            if (disposing)
+            {
+            }
+            if (_handle != 0)
+            {
+                Bindings.saucer_window_free(_handle);
+                _handle = 0;
+            }
+            _disposedValue = true;
         }
     }
 
-    ~Screen() => Dispose();
+    ~Screen()
+    {
+        Dispose(disposing: false);
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

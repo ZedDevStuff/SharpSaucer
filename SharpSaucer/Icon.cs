@@ -8,14 +8,14 @@ namespace SharpSaucer;
 public sealed class Icon : IDisposable
 {
     private nint _handle;
-    private bool _disposed;
+    private bool _disposedValue;
 
     /// <summary>The underlying native handle.</summary>
     public nint Handle
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            ObjectDisposedException.ThrowIf(_disposedValue, this);
             return _handle;
         }
     }
@@ -95,18 +95,32 @@ public sealed class Icon : IDisposable
     /// <summary>Save the icon to a file on disk.</summary>
     public void Save(string path) => Bindings.saucer_icon_save(Handle, path);
 
-    // ── IDisposable ─────────────────────────────
-
-    public void Dispose()
+    private void Dispose(bool disposing)
     {
-        if (_disposed) return;
-        _disposed = true;
-        if (_handle != 0)
+        if (!_disposedValue)
         {
-            Bindings.saucer_icon_free(_handle);
-            _handle = 0;
+            if (disposing)
+            {
+                
+            }
+            if (_handle != 0)
+            {
+                Bindings.saucer_window_free(_handle);
+                _handle = 0;
+            }
+            _disposedValue = true;
         }
     }
 
-    ~Icon() => Dispose();
+    ~Icon()
+    {
+        Dispose(disposing: false);
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

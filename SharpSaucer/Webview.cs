@@ -13,7 +13,7 @@ namespace SharpSaucer;
 public sealed class Webview : IDisposable
 {
     private nint _handle;
-    private bool _disposed;
+    private bool _disposedValue;
 
     // prevent GC of delegates passed to native code
     private readonly List<Delegate> _pinnedDelegates = [];
@@ -33,7 +33,7 @@ public sealed class Webview : IDisposable
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            ObjectDisposedException.ThrowIf(_disposedValue, this);
             return _handle;
         }
     }
@@ -483,19 +483,32 @@ public sealed class Webview : IDisposable
         }
     }
 
-    // ── IDisposable ─────────────────────────────
+    private void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                _pinnedDelegates.Clear();
+            }
+            if (_handle != 0)
+            {
+                Bindings.saucer_window_free(_handle);
+                _handle = 0;
+            }
+            _disposedValue = true;
+        }
+    }
+
+    ~Webview()
+    {
+        Dispose(disposing: false);
+    }
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        if (_handle != 0)
-        {
-            Bindings.saucer_webview_free(_handle);
-            _handle = 0;
-        }
-        _pinnedDelegates.Clear();
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
-
-    ~Webview() => Dispose();
 }
