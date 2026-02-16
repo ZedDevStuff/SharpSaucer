@@ -14,9 +14,17 @@ public sealed class Window : IDisposable
 {
     private nint _handle;
     private bool _disposed;
+    private bool _disposedValue;
 
     // prevent GC of delegates passed to native code
     private readonly List<Delegate> _pinnedDelegates = [];
+    private readonly NativeEventSubscription<Action<SaucerWindowDecoration>> _decoratedSubs = new();
+    private readonly NativeEventSubscription<Action<bool>> _maximizeSubs = new();
+    private readonly NativeEventSubscription<Action<bool>> _minimizeSubs = new();
+    private readonly NativeEventSubscription<Action> _closedSubs = new();
+    private readonly NativeEventSubscription<Action<int, int>> _resizeSubs = new();
+    private readonly NativeEventSubscription<Action<bool>> _focusSubs = new();
+    private readonly NativeEventSubscription<Func<SaucerPolicy>> _closeSubs = new();
 
     /// <summary>The underlying native handle.</summary>
     public nint Handle
@@ -244,19 +252,174 @@ public sealed class Window : IDisposable
     public void OffAll(SaucerWindowEvent @event)
         => Bindings.saucer_window_off_all(Handle, @event);
 
-    // ── IDisposable ─────────────────────────────
+    // ── C# Events ───────────────────────────────
+
+    /// <summary>Raised when the window decoration style changes.</summary>
+    public event Action<SaucerWindowDecoration>? DecorationChanged
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventDecoratedCallback native = (_, decoration, _) => value(decoration);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Decorated, ptr, true, 0);
+            _decoratedSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_decoratedSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Decorated, id);
+        }
+    }
+
+    /// <summary>Raised when the window is maximized or restored.</summary>
+    public event Action<bool>? WindowMaximized
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventMaximizeCallback native = (_, maximized, _) => value(maximized);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Maximize, ptr, true, 0);
+            _maximizeSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_maximizeSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Maximize, id);
+        }
+    }
+
+    /// <summary>Raised when the window is minimized or restored.</summary>
+    public event Action<bool>? WindowMinimized
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventMinimizeCallback native = (_, minimized, _) => value(minimized);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Minimize, ptr, true, 0);
+            _minimizeSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_minimizeSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Minimize, id);
+        }
+    }
+
+    /// <summary>Raised after the window has been closed.</summary>
+    public event Action? Closed
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventClosedCallback native = (_, _) => value();
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Closed, ptr, true, 0);
+            _closedSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_closedSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Closed, id);
+        }
+    }
+
+    /// <summary>Raised when the window is resized. Parameters are (width, height).</summary>
+    public event Action<int, int>? Resized
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventResizeCallback native = (_, w, h, _) => value(w, h);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Resize, ptr, true, 0);
+            _resizeSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_resizeSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Resize, id);
+        }
+    }
+
+    /// <summary>Raised when the window gains or loses focus.</summary>
+    public event Action<bool>? FocusChanged
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventFocusCallback native = (_, focused, _) => value(focused);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Focus, ptr, true, 0);
+            _focusSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_focusSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Focus, id);
+        }
+    }
+
+    /// <summary>Raised when the window is asked to close. Return <see cref="SaucerPolicy.Block"/> to prevent closing.</summary>
+    public event Func<SaucerPolicy>? CloseRequested
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWindowEventCloseCallback native = (_, _) => value();
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_window_on(Handle, SaucerWindowEvent.Close, ptr, true, 0);
+            _closeSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_closeSubs.TryRemove(value, out var id))
+                Bindings.saucer_window_off(Handle, SaucerWindowEvent.Close, id);
+        }
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                _pinnedDelegates.Clear();
+            }
+            if (_handle != 0)
+            {
+                Bindings.saucer_window_free(_handle);
+                _handle = 0;
+            }
+            _disposedValue = true;
+        }
+    }
+
+    ~Window()
+    {
+        Dispose(disposing: false);
+    }
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        if (_handle != 0)
-        {
-            Bindings.saucer_window_free(_handle);
-            _handle = 0;
-        }
-        _pinnedDelegates.Clear();
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
-
-    ~Window() => Dispose();
 }

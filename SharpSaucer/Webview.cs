@@ -17,6 +17,16 @@ public sealed class Webview : IDisposable
 
     // prevent GC of delegates passed to native code
     private readonly List<Delegate> _pinnedDelegates = [];
+    private readonly NativeEventSubscription<Func<PermissionRequest, SaucerStatus>> _permissionSubs = new();
+    private readonly NativeEventSubscription<Func<bool, SaucerPolicy>> _fullscreenSubs = new();
+    private readonly NativeEventSubscription<Action> _domReadySubs = new();
+    private readonly NativeEventSubscription<Action<Url>> _navigatedSubs = new();
+    private readonly NativeEventSubscription<Func<Navigation, SaucerPolicy>> _navigateSubs = new();
+    private readonly NativeEventSubscription<Func<string, SaucerStatus>> _messageSubs = new();
+    private readonly NativeEventSubscription<Action<Url>> _requestSubs = new();
+    private readonly NativeEventSubscription<Action<Icon>> _faviconSubs = new();
+    private readonly NativeEventSubscription<Action<string>> _titleSubs = new();
+    private readonly NativeEventSubscription<Action<SaucerState>> _loadSubs = new();
 
     /// <summary>The underlying native handle.</summary>
     public nint Handle
@@ -258,6 +268,220 @@ public sealed class Webview : IDisposable
     /// <summary>Remove all event handlers for the given event.</summary>
     public void OffAll(SaucerWebviewEvent @event)
         => Bindings.saucer_webview_off_all(Handle, @event);
+
+    // ── C# Events ───────────────────────────────
+
+    /// <summary>Raised when a permission is requested. Return <see cref="SaucerStatus.Handled"/> to indicate the request was handled.</summary>
+    public event Func<PermissionRequest, SaucerStatus>? PermissionRequested
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventPermissionCallback native = (_, req, _) => value(new PermissionRequest(req));
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Permission, ptr, true, 0);
+            _permissionSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_permissionSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Permission, id);
+        }
+    }
+
+    /// <summary>Raised when the page requests fullscreen. Return <see cref="SaucerPolicy.Block"/> to deny.</summary>
+    public event Func<bool, SaucerPolicy>? FullscreenRequested
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventFullscreenCallback native = (_, fullscreen, _) => value(fullscreen);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Fullscreen, ptr, true, 0);
+            _fullscreenSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_fullscreenSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Fullscreen, id);
+        }
+    }
+
+    /// <summary>Raised when the DOM is ready.</summary>
+    public event Action? DomReady
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventDomReadyCallback native = (_, _) => value();
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.DomReady, ptr, true, 0);
+            _domReadySubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_domReadySubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.DomReady, id);
+        }
+    }
+
+    /// <summary>Raised after the webview has navigated to a new URL.</summary>
+    public event Action<Url>? Navigated
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventNavigatedCallback native = (_, urlPtr, _) => value(Url.FromHandle(urlPtr));
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Navigated, ptr, true, 0);
+            _navigatedSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_navigatedSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Navigated, id);
+        }
+    }
+
+    /// <summary>Raised before the webview navigates. Return <see cref="SaucerPolicy.Block"/> to prevent navigation.</summary>
+    public event Func<Navigation, SaucerPolicy>? Navigate
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventNavigateCallback native = (_, navPtr, _) => value(new Navigation(navPtr));
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Navigate, ptr, true, 0);
+            _navigateSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_navigateSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Navigate, id);
+        }
+    }
+
+    /// <summary>Raised when a message is received from the page. Return <see cref="SaucerStatus.Handled"/> if consumed.</summary>
+    public event Func<string, SaucerStatus>? MessageReceived
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventMessageCallback native = (_, msgPtr, size, _) =>
+            {
+                var msg = size > 0 && msgPtr != 0
+                    ? Marshal.PtrToStringUTF8(msgPtr, (int)size) ?? string.Empty
+                    : string.Empty;
+                return value(msg);
+            };
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Message, ptr, true, 0);
+            _messageSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_messageSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Message, id);
+        }
+    }
+
+    /// <summary>Raised when a resource is requested.</summary>
+    public event Action<Url>? ResourceRequested
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventRequestCallback native = (_, urlPtr, _) => value(Url.FromHandle(urlPtr));
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Request, ptr, true, 0);
+            _requestSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_requestSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Request, id);
+        }
+    }
+
+    /// <summary>Raised when the page favicon changes.</summary>
+    public event Action<Icon>? FaviconChanged
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventFaviconCallback native = (_, iconPtr, _) => value(Icon.FromHandle(iconPtr));
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Favicon, ptr, true, 0);
+            _faviconSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_faviconSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Favicon, id);
+        }
+    }
+
+    /// <summary>Raised when the page title changes.</summary>
+    public event Action<string>? TitleChanged
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventTitleCallback native = (_, titlePtr, size, _) =>
+            {
+                var title = size > 0 && titlePtr != 0
+                    ? Marshal.PtrToStringUTF8(titlePtr, (int)size) ?? string.Empty
+                    : string.Empty;
+                value(title);
+            };
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Title, ptr, true, 0);
+            _titleSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_titleSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Title, id);
+        }
+    }
+
+    /// <summary>Raised when the page load state changes.</summary>
+    public event Action<SaucerState>? LoadingStateChanged
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerWebviewEventLoadCallback native = (_, state, _) => value(state);
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_webview_on(Handle, SaucerWebviewEvent.Load, ptr, true, 0);
+            _loadSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_loadSubs.TryRemove(value, out var id))
+                Bindings.saucer_webview_off(Handle, SaucerWebviewEvent.Load, id);
+        }
+    }
 
     // ── IDisposable ─────────────────────────────
 

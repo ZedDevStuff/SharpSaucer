@@ -16,6 +16,7 @@ public sealed class Application : IDisposable
 
     // prevent GC of delegates passed to native code
     private readonly List<Delegate> _pinnedDelegates = [];
+    private readonly NativeEventSubscription<Func<SaucerPolicy>> _quitSubs = new();
 
     /// <summary>The underlying native handle.</summary>
     public nint Handle
@@ -170,6 +171,28 @@ public sealed class Application : IDisposable
     /// <summary>Remove all event handlers for the given event.</summary>
     public void OffAll(SaucerApplicationEvent @event)
         => Bindings.saucer_application_off_all(Handle, @event);
+
+    // ── C# Events ───────────────────────────────
+
+    /// <summary>Raised when the application is asked to quit. Return <see cref="SaucerPolicy.Block"/> to prevent quitting.</summary>
+    public event Func<SaucerPolicy>? QuitRequested
+    {
+        add
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            SaucerApplicationEventQuitCallback native = (_, _) => value();
+            _pinnedDelegates.Add(native);
+            var ptr = Marshal.GetFunctionPointerForDelegate(native);
+            var id = Bindings.saucer_application_on(Handle, SaucerApplicationEvent.Quit, ptr, true, 0);
+            _quitSubs.Add(value, id, native);
+        }
+        remove
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (_quitSubs.TryRemove(value, out var id))
+                Bindings.saucer_application_off(Handle, SaucerApplicationEvent.Quit, id);
+        }
+    }
 
     // ── IDisposable ─────────────────────────────
 
