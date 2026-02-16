@@ -36,6 +36,19 @@ public sealed class Window : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Create a new window for the given application.</summary>
+    public Window(Application application)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+        int error = 0;
+        _handle = Bindings.saucer_window_new(application.Handle, ref error);
+
+        if (error != 0 || _handle == 0)
+            throw new InvalidOperationException($"Failed to create window (error={error}).");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Create a new window for the given application.</summary>

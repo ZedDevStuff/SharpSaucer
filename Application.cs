@@ -35,6 +35,27 @@ public sealed class Application : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Create a new saucer application with the given ID.</summary>
+    public Application(string id, bool quitOnLastWindowClosed = true)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+
+        var opts = Bindings.saucer_application_options_new(id);
+        if (opts == 0)
+            throw new InvalidOperationException("Failed to create application options.");
+
+        Bindings.saucer_application_options_set_quit_on_last_window_closed(opts, quitOnLastWindowClosed);
+
+        int error = 0;
+        _handle = Bindings.saucer_application_new(opts, ref error);
+        Bindings.saucer_application_options_free(opts);
+
+        if (error != 0 || _handle == 0)
+            throw new InvalidOperationException($"Failed to create application (error={error}).");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Create a new saucer application with the given ID.</summary>

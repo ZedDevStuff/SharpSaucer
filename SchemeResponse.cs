@@ -31,6 +31,19 @@ public sealed class SchemeResponse : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Create a new scheme response from a stash and MIME type.</summary>
+    public SchemeResponse(Stash content, string mime)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentNullException.ThrowIfNull(mime);
+        _handle = Bindings.saucer_scheme_response_new(content.Handle, mime);
+
+        if (_handle == 0)
+            throw new InvalidOperationException("Failed to create SchemeResponse.");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Create a new scheme response from a stash and MIME type.</summary>

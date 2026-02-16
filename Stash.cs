@@ -31,6 +31,29 @@ public sealed class Stash : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Create a stash by copying the given byte array.</summary>
+    public unsafe Stash(byte[] data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        fixed (byte* ptr = data)
+            _handle = Bindings.saucer_stash_new_from((nint)ptr, (nuint)data.Length);
+
+        if (_handle == 0)
+            throw new InvalidOperationException("Failed to create Stash.");
+    }
+
+    /// <summary>Create a stash from a UTF-8 string (copies).</summary>
+    public Stash(string str)
+    {
+        ArgumentNullException.ThrowIfNull(str);
+        _handle = Bindings.saucer_stash_new_from_str(str);
+
+        if (_handle == 0)
+            throw new InvalidOperationException("Failed to create Stash.");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Create an empty stash.</summary>

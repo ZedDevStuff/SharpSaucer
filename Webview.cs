@@ -36,6 +36,25 @@ public sealed class Webview : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Create a new webview for the given window with default options.</summary>
+    public Webview(Window window)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+
+        var opts = Bindings.saucer_webview_options_new(window.Handle);
+        if (opts == 0)
+            throw new InvalidOperationException("Failed to create webview options.");
+
+        int error = 0;
+        _handle = Bindings.saucer_webview_new(opts, ref error);
+        Bindings.saucer_webview_options_free(opts);
+
+        if (error != 0 || _handle == 0)
+            throw new InvalidOperationException($"Failed to create webview (error={error}).");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Create a new webview for the given window.</summary>

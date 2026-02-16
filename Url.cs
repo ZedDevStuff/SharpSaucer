@@ -30,6 +30,40 @@ public sealed class Url : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Create a URL from a plain string.</summary>
+    public Url(string str)
+    {
+        ArgumentNullException.ThrowIfNull(str);
+        int error = 0;
+        _handle = Bindings.saucer_url_new_from(str, ref error);
+
+        if (error != 0 || _handle == 0)
+            throw new InvalidOperationException($"Failed to create URL from string (error={error}).");
+    }
+
+    /// <summary>Create a URL from individual components.</summary>
+    public Url(string scheme, string host, nuint? port = null, string path = "/")
+    {
+        ArgumentNullException.ThrowIfNull(scheme);
+        ArgumentNullException.ThrowIfNull(host);
+
+        if (port.HasValue)
+        {
+            var p = port.Value;
+            _handle = Bindings.saucer_url_new_opts(scheme, host, ref p, path);
+        }
+        else
+        {
+            nuint zero = 0;
+            _handle = Bindings.saucer_url_new_opts(scheme, host, ref zero, path);
+        }
+
+        if (_handle == 0)
+            throw new InvalidOperationException("Failed to create URL from components.");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Parse a URL string (percent-encoded).</summary>
@@ -41,32 +75,6 @@ public sealed class Url : IDisposable
             throw new InvalidOperationException($"Failed to parse URL (error={error}).");
 
         return new Url(handle);
-    }
-
-    /// <summary>Create a URL from a plain string.</summary>
-    public static Url From(string str)
-    {
-        int error = 0;
-        var handle = Bindings.saucer_url_new_from(str, ref error);
-        if (error != 0 || handle == 0)
-            throw new InvalidOperationException($"Failed to create URL from string (error={error}).");
-
-        return new Url(handle);
-    }
-
-    /// <summary>Create a URL from individual components.</summary>
-    public static Url FromComponents(string scheme, string host, nuint? port = null, string path = "/")
-    {
-        if (port.HasValue)
-        {
-            var p = port.Value;
-            return new Url(Bindings.saucer_url_new_opts(scheme, host, ref p, path));
-        }
-        else
-        {
-            nuint zero = 0;
-            return new Url(Bindings.saucer_url_new_opts(scheme, host, ref zero, path));
-        }
     }
 
     /// <summary>Wrap an existing native handle. Takes ownership.</summary>

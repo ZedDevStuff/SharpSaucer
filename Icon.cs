@@ -28,6 +28,30 @@ public sealed class Icon : IDisposable
         _handle = handle;
     }
 
+    // ── Constructors ────────────────────────────
+
+    /// <summary>Load an icon from a file on disk.</summary>
+    public Icon(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        int error = 0;
+        _handle = Bindings.saucer_icon_new_from_file(path, ref error);
+
+        if (error != 0 || _handle == 0)
+            throw new InvalidOperationException($"Failed to load icon from file (error={error}).");
+    }
+
+    /// <summary>Load an icon from a stash (in-memory image data).</summary>
+    public Icon(Stash stash)
+    {
+        ArgumentNullException.ThrowIfNull(stash);
+        int error = 0;
+        _handle = Bindings.saucer_icon_new_from_stash(stash.Handle, ref error);
+
+        if (error != 0 || _handle == 0)
+            throw new InvalidOperationException($"Failed to load icon from stash (error={error}).");
+    }
+
     // ── Factories ───────────────────────────────
 
     /// <summary>Load an icon from a file on disk.</summary>
