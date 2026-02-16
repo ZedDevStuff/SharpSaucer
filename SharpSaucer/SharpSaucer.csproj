@@ -14,6 +14,7 @@
     <Product>SharpSaucer</Product>
     <Description>C# bindings for the cross platform C++ WebVeiw library Saucer</Description>
     <PackageTags></PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

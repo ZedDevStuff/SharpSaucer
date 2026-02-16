@@ -9,7 +9,7 @@ namespace SharpSaucer;
 
 /// <summary>
 /// Raw P/Invoke bindings for the saucer C bindings library.
-/// Maps to the functions declared in the include/saucer/*.h headers.
+/// Maps to the functions declared in the include/saucer/*.h headers of the saucer/bindings repository.
 /// </summary>
 internal static partial class Bindings
 {
