@@ -1,4 +1,3 @@
 <Solution>
-  <Project Path="Example/Example.csproj" />
   <Project Path="SharpSaucer.csproj" />
 </Solution>
