@@ -1,90 +1,37 @@
-using System;
-
-using SharpSaucer.Types;
+﻿using SharpSaucer.Native;
 
 namespace SharpSaucer;
 
-/// <summary>
-/// Managed wrapper around a native saucer scheme response.
-/// Used to construct responses for custom scheme handlers.
-/// </summary>
-public sealed class SchemeResponse : IDisposable
+public class SchemeResponse : StructWrapper
 {
-    private nint _handle;
-    private bool _disposedValue;
-
-    /// <summary>The underlying native handle.</summary>
-    public nint Handle
+    public SchemeResponse(Stash content, string contentType)
     {
-        get
+        unsafe
         {
-            ObjectDisposedException.ThrowIf(_disposedValue, this);
-            return _handle;
+            Handle = (nint)NativeMethods.saucer_scheme_response_new((SaucerStash*)content.Handle, contentType);
         }
     }
 
-    private SchemeResponse(nint handle)
+    public void AppendHeader(string header, string value)
     {
-        if (handle == 0)
-            throw new InvalidOperationException("Failed to create SchemeResponse.");
-
-        _handle = handle;
+        unsafe
+        {
+            NativeMethods.saucer_scheme_response_append_header((SaucerSchemeResponse*)Handle, header, value);
+        }
     }
-
-    // ── Constructors ────────────────────────────
-
-    /// <summary>Create a new scheme response from a stash and MIME type.</summary>
-    public SchemeResponse(Stash content, string mime)
-    {
-        ArgumentNullException.ThrowIfNull(content);
-        ArgumentNullException.ThrowIfNull(mime);
-        _handle = Bindings.saucer_scheme_response_new(content.Handle, mime);
-
-        if (_handle == 0)
-            throw new InvalidOperationException("Failed to create SchemeResponse.");
-    }
-
-    // ── Factories ───────────────────────────────
-
-    /// <summary>Create a new scheme response from a stash and MIME type.</summary>
-    public static SchemeResponse Create(Stash content, string mime)
-        => new(Bindings.saucer_scheme_response_new(content.Handle, mime));
-
-    // ── Methods ─────────────────────────────────
-
-    /// <summary>Append a response header.</summary>
-    public void AppendHeader(string name, string value)
-        => Bindings.saucer_scheme_response_append_header(Handle, name, value);
-
-    /// <summary>Set the HTTP status code of the response.</summary>
     public void SetStatus(int status)
-        => Bindings.saucer_scheme_response_set_status(Handle, status);
-
-    private void Dispose(bool disposing)
     {
-        if (!_disposedValue)
+        unsafe
         {
-            if (disposing)
-            {
-            }
-            if (_handle != 0)
-            {
-                Bindings.saucer_window_free(_handle);
-                _handle = 0;
-            }
-            _disposedValue = true;
+            NativeMethods.saucer_scheme_response_set_status((SaucerSchemeResponse*)Handle, status);
         }
     }
 
-    ~SchemeResponse()
+    public override void Free()
     {
-        Dispose(disposing: false);
-    }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        unsafe
+        {
+            NativeMethods.saucer_scheme_response_free((SaucerSchemeResponse*)Handle);
+        }
     }
 }

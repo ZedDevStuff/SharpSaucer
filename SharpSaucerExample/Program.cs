@@ -1,5 +1,5 @@
-﻿using System;
-using SharpSaucer;
+﻿using SharpSaucer;
+using System;
 
 namespace SharpSaucerExample
 {
@@ -18,7 +18,7 @@ namespace SharpSaucerExample
                         MinSize = (400, 300),
                         Title = "SharpSaucer – Hello World!"
                     };
-                    var webview = new Webview(window)
+                    var webview = new WebView(window)
                     {
                         DevTools = true,
                         ContextMenu = true

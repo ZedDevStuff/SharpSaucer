@@ -1,34 +1,29 @@
-using System;
+﻿using SharpSaucer.Native;
 
 namespace SharpSaucer;
 
-/// <summary>
-/// Managed wrapper around a native saucer navigation.
-/// This is a read-only, non-owning wrapper — the native side owns the lifetime.
-/// </summary>
-public readonly struct Navigation
+public unsafe class Navigation : StructWrapper
 {
-    private readonly nint _handle;
-
-    /// <summary>The underlying native handle.</summary>
-    public nint Handle => _handle;
-
-    internal Navigation(nint handle)
+    internal Navigation(nint handle) : base(handle)
     {
-        _handle = handle;
+    }
+    internal Navigation(SaucerNavigation* handle) : base((nint)handle)
+    {
     }
 
-    // ── Properties ──────────────────────────────
-
     /// <summary>The URL being navigated to. The caller owns the returned Url and must dispose it.</summary>
-    public Url Url => Url.FromHandle(Bindings.saucer_navigation_url(_handle));
+    public Url Url => new Url(NativeMethods.saucer_navigation_url((SaucerNavigation*)Handle));
 
     /// <summary>Whether the navigation targets a new window.</summary>
-    public bool NewWindow => Bindings.saucer_navigation_new_window(_handle);
+    public bool NewWindow => NativeMethods.saucer_navigation_new_window((SaucerNavigation*)Handle);
 
     /// <summary>Whether this navigation is a redirection.</summary>
-    public bool Redirection => Bindings.saucer_navigation_redirection(_handle);
+    public bool Redirection => NativeMethods.saucer_navigation_redirection((SaucerNavigation*)Handle);
 
     /// <summary>Whether the navigation was initiated by the user.</summary>
-    public bool UserInitiated => Bindings.saucer_navigation_user_initiated(_handle);
+    public bool UserInitiated => NativeMethods.saucer_navigation_user_initiated((SaucerNavigation*)Handle);
+
+    public override void Free()
+    {
+    }
 }

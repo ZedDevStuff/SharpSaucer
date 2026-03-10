@@ -1,82 +1,52 @@
-using System;
-
-using SharpSaucer.Types;
+﻿using SharpSaucer.Native;
 
 namespace SharpSaucer;
 
-/// <summary>
-/// Managed wrapper around a native saucer permission request.
-/// </summary>
-public sealed class PermissionRequest : IDisposable
+public unsafe class PermissionRequest : StructWrapper
 {
-    private nint _handle;
-    private bool _disposedValue;
-
-    /// <summary>The underlying native handle.</summary>
-    public nint Handle
+    public Url Url
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposedValue, this);
-            return _handle;
+            unsafe
+            {
+                return new Url(NativeMethods.saucer_permission_request_url((SaucerPermissionRequest*)Handle));
+            }
         }
     }
-
-    internal PermissionRequest(nint handle)
+    public SaucerPermissionType PermissionType => NativeMethods.saucer_permission_request_type((SaucerPermissionRequest*)Handle);
+    internal PermissionRequest(nint handle) : base(handle)
     {
-        if (handle == 0)
-            throw new InvalidOperationException("Invalid permission request handle.");
-
-        _handle = handle;
+    }
+    internal PermissionRequest(SaucerPermissionRequest* handle) : base((nint)handle)
+    {
     }
 
-    /// <summary>Wrap an existing native handle. Takes ownership.</summary>
-    internal static PermissionRequest FromHandle(nint handle) => new(handle);
-
-    // ── Properties ──────────────────────────────
-
-    /// <summary>The URL associated with the permission request. The caller owns the returned Url and must dispose it.</summary>
-    public Url Url => Url.FromHandle(Bindings.saucer_permission_request_url(Handle));
-
-    /// <summary>The type of permission being requested.</summary>
-    public SaucerPermissionType PermissionType => Bindings.saucer_permission_request_type(Handle);
-
-    // ── Methods ─────────────────────────────────
-
-    /// <summary>Accept or deny the permission request.</summary>
-    public void Accept(bool accept = true) => Bindings.saucer_permission_request_accept(Handle, accept);
-
-    /// <summary>Deny the permission request.</summary>
-    public void Deny() => Accept(false);
-
-    /// <summary>Create an independent copy of this request.</summary>
-    public PermissionRequest Copy() => new(Bindings.saucer_permission_request_copy(Handle));
-
-    private void Dispose(bool disposing)
+    public void Accept()
     {
-        if (!_disposedValue)
+        unsafe
         {
-            if (disposing)
-            {
-            }
-            if (_handle != 0)
-            {
-                Bindings.saucer_window_free(_handle);
-                _handle = 0;
-            }
-            _disposedValue = true;
+            NativeMethods.saucer_permission_request_accept((SaucerPermissionRequest*)Handle, true);
+        }
+    }
+    public void Deny()
+    {
+        unsafe
+        {
+            NativeMethods.saucer_permission_request_accept((SaucerPermissionRequest*)Handle, false);
         }
     }
 
-    ~PermissionRequest()
+    public PermissionRequest Copy()
     {
-        Dispose(disposing: false);
+        unsafe
+        {
+            return new PermissionRequest(NativeMethods.saucer_permission_request_copy((SaucerPermissionRequest*)Handle));
+        }
     }
 
-    public void Dispose()
+    public override void Free()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        NativeMethods.saucer_permission_request_free((SaucerPermissionRequest*)Handle);
     }
 }

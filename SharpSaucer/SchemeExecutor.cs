@@ -1,77 +1,43 @@
-using System;
-
-using SharpSaucer.Types;
+﻿using SharpSaucer.Native;
 
 namespace SharpSaucer;
 
-/// <summary>
-/// Managed wrapper around a native saucer scheme executor.
-/// Used in scheme handler callbacks to accept or reject a request.
-/// </summary>
-public sealed class SchemeExecutor : IDisposable
+public class SchemeExecutor : StructWrapper
 {
-    private nint _handle;
-    private bool _disposedValue;
-
-    /// <summary>The underlying native handle.</summary>
-    public nint Handle
+    internal SchemeExecutor(nint handle) : base(handle)
     {
-        get
-        {
-            ObjectDisposedException.ThrowIf(_disposedValue, this);
-            return _handle;
-        }
+    }
+    internal unsafe SchemeExecutor(SaucerSchemeExecutor* handle) : base((nint)handle)
+    {
     }
 
-    internal SchemeExecutor(nint handle)
-    {
-        if (handle == 0)
-            throw new InvalidOperationException("Invalid scheme executor handle.");
-
-        _handle = handle;
-    }
-
-    /// <summary>Wrap an existing native handle. Takes ownership.</summary>
-    internal static SchemeExecutor FromHandle(nint handle) => new(handle);
-
-    // ── Methods ─────────────────────────────────
-
-    /// <summary>Accept the scheme request with the given response.</summary>
     public void Accept(SchemeResponse response)
-        => Bindings.saucer_scheme_executor_accept(Handle, response.Handle);
-
-    /// <summary>Reject the scheme request with an error.</summary>
-    public void Reject(SaucerSchemeError error)
-        => Bindings.saucer_scheme_executor_reject(Handle, error);
-
-    /// <summary>Create an independent copy of this executor.</summary>
-    public SchemeExecutor Copy() => new(Bindings.saucer_scheme_executor_copy(Handle));
-
-    private void Dispose(bool disposing)
     {
-        if (!_disposedValue)
+        unsafe
         {
-            if (disposing)
-            {
-            }
-            if (_handle != 0)
-            {
-                Bindings.saucer_window_free(_handle);
-                _handle = 0;
-            }
-            _disposedValue = true;
+            NativeMethods.saucer_scheme_executor_accept((SaucerSchemeExecutor*)Handle, (SaucerSchemeResponse*)response.Handle);
+        }
+    }
+    public void Reject(SaucerSchemeError error)
+    {
+        unsafe
+        {
+            NativeMethods.saucer_scheme_executor_reject((SaucerSchemeExecutor*)Handle, error);
+        }
+    }
+    public SchemeExecutor Copy()
+    {
+        unsafe
+        {
+            return new SchemeExecutor(NativeMethods.saucer_scheme_executor_copy((SaucerSchemeExecutor*)Handle));
         }
     }
 
-    ~SchemeExecutor()
+    public override void Free()
     {
-        Dispose(disposing: false);
-    }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        unsafe
+        {
+            NativeMethods.saucer_scheme_executor_free((SaucerSchemeExecutor*)Handle);
+        }
     }
 }

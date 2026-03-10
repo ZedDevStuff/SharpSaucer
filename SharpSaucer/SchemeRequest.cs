@@ -1,106 +1,75 @@
-using System;
-using System.Text;
+﻿using System.Text;
+
+using SharpSaucer.Native;
 
 namespace SharpSaucer;
 
-/// <summary>
-/// Managed wrapper around a native saucer scheme request.
-/// This is a read-only wrapper typically received in scheme handler callbacks.
-/// </summary>
-public sealed class SchemeRequest : IDisposable
+public class SchemeRequest : StructWrapper
 {
-    private nint _handle;
-    private bool _disposedValue;
-
-    /// <summary>The underlying native handle.</summary>
-    public nint Handle
+    public Url Url
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposedValue, this);
-            return _handle;
-        }
-    }
-
-    internal SchemeRequest(nint handle)
-    {
-        if (handle == 0)
-            throw new InvalidOperationException("Invalid scheme request handle.");
-
-        _handle = handle;
-    }
-
-    /// <summary>Wrap an existing native handle. Takes ownership.</summary>
-    internal static SchemeRequest FromHandle(nint handle) => new(handle);
-
-    // ── Properties ──────────────────────────────
-
-    /// <summary>The request URL. The caller owns the returned Url and must dispose it.</summary>
-    public Url Url => Url.FromHandle(Bindings.saucer_scheme_request_url(Handle));
-
-    /// <summary>The HTTP method (e.g. "GET", "POST").</summary>
-    public unsafe string Method
-    {
-        get
-        {
-            nuint size = 0;
-            Bindings.saucer_scheme_request_method(Handle, 0, ref size);
-            if (size == 0) return string.Empty;
-
-            var buf = stackalloc byte[(int)size];
-            Bindings.saucer_scheme_request_method(Handle, (nint)buf, ref size);
-            return Encoding.UTF8.GetString(buf, (int)size);
-        }
-    }
-
-    /// <summary>The request body content as a native stash pointer, or IntPtr.Zero if none.</summary>
-    public nint ContentHandle => Bindings.saucer_scheme_request_content(Handle);
-
-    /// <summary>The request headers as a raw string.</summary>
-    public unsafe string Headers
-    {
-        get
-        {
-            nuint size = 0;
-            Bindings.saucer_scheme_request_headers(Handle, 0, ref size);
-            if (size == 0) return string.Empty;
-
-            var buf = stackalloc byte[(int)size];
-            Bindings.saucer_scheme_request_headers(Handle, (nint)buf, ref size);
-            return Encoding.UTF8.GetString(buf, (int)size);
-        }
-    }
-
-    // ── Methods ─────────────────────────────────
-
-    /// <summary>Create an independent copy of this request.</summary>
-    public SchemeRequest Copy() => new(Bindings.saucer_scheme_request_copy(Handle));
-
-    private void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
+            unsafe
             {
+                return new Url(NativeMethods.saucer_scheme_request_url((SaucerSchemeRequest*)Handle));
             }
-            if (_handle != 0)
+        }
+    }
+    public string Method
+    {
+        get
+        {
+            unsafe
             {
-                Bindings.saucer_window_free(_handle);
-                _handle = 0;
+                NativeMethods.saucer_scheme_request_method((SaucerSchemeRequest*)Handle, 0, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                var buf = stackalloc byte[(int)length];
+                NativeMethods.saucer_scheme_request_method((SaucerSchemeRequest*)Handle, (nint)buf, out _);
+                return Encoding.UTF8.GetString(buf, (int)length);
             }
-            _disposedValue = true;
+        }
+    }
+    public Stash Content
+    {
+        get
+        {
+            unsafe
+            {
+                return new Stash(NativeMethods.saucer_scheme_request_content((SaucerSchemeRequest*)Handle));
+            }
+        }
+    }
+    public string Headers
+    {
+        get
+        {
+            unsafe
+            {
+                NativeMethods.saucer_scheme_request_headers((SaucerSchemeRequest*)Handle, 0, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                var buf = stackalloc byte[(int)length];
+                NativeMethods.saucer_scheme_request_headers((SaucerSchemeRequest*)Handle, (nint)buf, out _);
+                return Encoding.UTF8.GetString(buf, (int)length);
+            }
         }
     }
 
-    ~SchemeRequest()
+    internal SchemeRequest(nint handle) : base(handle)
     {
-        Dispose(disposing: false);
+    }
+    internal unsafe SchemeRequest(SaucerSchemeRequest* handle) : base((nint)handle)
+    {
     }
 
-    public void Dispose()
+
+    public override void Free()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        unsafe
+        {
+            NativeMethods.saucer_scheme_request_free((SaucerSchemeRequest*)Handle);
+        }
     }
 }

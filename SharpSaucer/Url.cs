@@ -1,163 +1,139 @@
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System;
+
+using SharpSaucer.Native;
 
 namespace SharpSaucer;
 
-/// <summary>
-/// Managed wrapper around a native saucer URL.
-/// </summary>
-public sealed class Url : IDisposable
+public class Url : StructWrapper
 {
-    private nint _handle;
-    private bool _disposedValue;
-
-    /// <summary>The underlying native handle.</summary>
-    public nint Handle
+    /// <summary>The scheme component (e.g. "https").</summary>
+    public string Scheme
     {
         get
         {
-            ObjectDisposedException.ThrowIf(_disposedValue, this);
-            return _handle;
+            unsafe
+            {
+                NativeMethods.saucer_url_scheme((SaucerUrl*)Handle, 0, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                var buf = stackalloc byte[(int)length];
+                NativeMethods.saucer_url_scheme((SaucerUrl*)Handle, (nint)buf, out _);
+                return System.Text.Encoding.UTF8.GetString(buf, (int)length);
+            }
         }
     }
-
-    private Url(nint handle)
-    {
-        if (handle == 0)
-            throw new InvalidOperationException("Failed to create Url.");
-
-        _handle = handle;
-    }
-
-    // ── Constructors ────────────────────────────
-
-    /// <summary>Create a URL from a plain string.</summary>
-    public Url(string str)
-    {
-        ArgumentNullException.ThrowIfNull(str);
-        int error = 0;
-        _handle = Bindings.saucer_url_new_from(str, ref error);
-
-        if (error != 0 || _handle == 0)
-            throw new InvalidOperationException($"Failed to create URL from string (error={error}).");
-    }
-
-    /// <summary>Create a URL from individual components.</summary>
-    public Url(string scheme, string host, nuint? port = null, string path = "/")
-    {
-        ArgumentNullException.ThrowIfNull(scheme);
-        ArgumentNullException.ThrowIfNull(host);
-
-        if (port.HasValue)
-        {
-            var p = port.Value;
-            _handle = Bindings.saucer_url_new_opts(scheme, host, ref p, path);
-        }
-        else
-        {
-            nuint zero = 0;
-            _handle = Bindings.saucer_url_new_opts(scheme, host, ref zero, path);
-        }
-
-        if (_handle == 0)
-            throw new InvalidOperationException("Failed to create URL from components.");
-    }
-
-    // ── Factories ───────────────────────────────
-
-    /// <summary>Parse a URL string (percent-encoded).</summary>
-    public static Url Parse(string str)
-    {
-        int error = 0;
-        var handle = Bindings.saucer_url_new_parse(str, ref error);
-        if (error != 0 || handle == 0)
-            throw new InvalidOperationException($"Failed to parse URL (error={error}).");
-
-        return new Url(handle);
-    }
-
-    /// <summary>Wrap an existing native handle. Takes ownership.</summary>
-    internal static Url FromHandle(nint handle) => new(handle);
-
-    // ── Properties ──────────────────────────────
-
-    /// <summary>The scheme component (e.g. "https").</summary>
-    public string Scheme => ReadStringProperty(Bindings.saucer_url_scheme);
 
     /// <summary>The host component.</summary>
-    public string Host => ReadStringProperty(Bindings.saucer_url_host);
+    public string Host
+    {
+        get
+        {
+            unsafe
+            {
+                NativeMethods.saucer_url_host((SaucerUrl*)Handle, 0, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                var buf = stackalloc byte[(int)length];
+                NativeMethods.saucer_url_host((SaucerUrl*)Handle, (nint)buf, out _);
+                return System.Text.Encoding.UTF8.GetString(buf, (int)length);
+            }
+        }
+    }
 
     /// <summary>The path component.</summary>
-    public string Path => ReadStringProperty(Bindings.saucer_url_path);
+    public string Path
+    {
+        get
+        {
+            unsafe
+            {
+                char* ptr = null;
+                NativeMethods.saucer_url_path((SaucerUrl*)Handle, (nint)ptr, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                return System.Text.Encoding.UTF8.GetString((byte*)ptr, (int)length);
+            }
+        }
+    }
 
     /// <summary>The user component (if present).</summary>
-    public string User => ReadStringProperty(Bindings.saucer_url_user);
+    public string User
+    {
+        get
+        {
+            unsafe
+            {
+                NativeMethods.saucer_url_user((SaucerUrl*)Handle, 0, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                var buf = stackalloc byte[(int)length];
+                NativeMethods.saucer_url_user((SaucerUrl*)Handle, (nint)buf, out _);
+                return System.Text.Encoding.UTF8.GetString(buf, (int)length);
+            }
+        }
+    }
 
     /// <summary>The password component (if present).</summary>
-    public string Password => ReadStringProperty(Bindings.saucer_url_password);
+    public string Password
+    {
+        get
+        {
+            unsafe
+            {
+                NativeMethods.saucer_url_password((SaucerUrl*)Handle, 0, out nuint length);
+                if (length == 0)
+                    return string.Empty;
+                var buf = stackalloc byte[(int)length];
+                NativeMethods.saucer_url_password((SaucerUrl*)Handle, (nint)buf, out _);
+                return System.Text.Encoding.UTF8.GetString(buf, (int)length);
+            }
+        }
+    }
 
     /// <summary>The port, or null if not set.</summary>
     public nuint? Port
     {
         get
         {
-            nuint port = 0;
-            return Bindings.saucer_url_port(Handle, ref port) ? port : null;
+            unsafe
+            {
+                return NativeMethods.saucer_url_port((SaucerUrl*)Handle, out var port) ? port : null;
+            }
         }
     }
 
-    // ── Methods ─────────────────────────────────
-
-    /// <summary>Create an independent copy of this URL.</summary>
-    public Url Copy() => new(Bindings.saucer_url_copy(Handle));
-
-    /// <summary>Return the full URL as a string.</summary>
-    public override string ToString() => ReadStringProperty(Bindings.saucer_url_string);
-
-    // ── Helpers ─────────────────────────────────
-
-    private delegate void StringGetter(nint handle, nint buffer, ref nuint size);
-
-    private unsafe string ReadStringProperty(StringGetter getter)
+    internal Url(nint handle) : base(handle)
     {
-        nuint size = 0;
-        getter(Handle, 0, ref size);
-
-        if (size == 0)
-            return string.Empty;
-
-        var buf = stackalloc byte[(int)size];
-        getter(Handle, (nint)buf, ref size);
-
-        return Encoding.UTF8.GetString(buf, (int)size);
     }
-
-    private void Dispose(bool disposing)
+    internal unsafe Url(SaucerUrl* handle) : base((nint)handle)
     {
-        if (!_disposedValue)
+    }
+    public Url(string url)
+    {
+        unsafe
         {
-            if (disposing)
-            {
-            }
-            if (_handle != 0)
-            {
-                Bindings.saucer_window_free(_handle);
-                _handle = 0;
-            }
-            _disposedValue = true;
+            Handle = (nint)NativeMethods.saucer_url_new_from(url, out int error);
+            if (error != 0)
+                throw new Exception($"Failed to create URL. Error code: {error}");
         }
     }
 
-    ~Url()
+    public static Url Parse(string url)
     {
-        Dispose(disposing: false);
+        unsafe
+        {
+            var handle = NativeMethods.saucer_url_new_parse(url, out int error);
+            if (error != 0)
+                throw new Exception($"Failed to parse URL. Error code: {error}");
+            return new Url(handle);
+        }
     }
 
-    public void Dispose()
+    public override void Free()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        unsafe
+        {
+            NativeMethods.saucer_url_free((SaucerUrl*)Handle);
+        }
     }
 }
