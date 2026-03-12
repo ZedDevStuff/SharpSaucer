@@ -36,20 +36,34 @@ internal unsafe delegate void SaucerWebviewEventLoad(saucer_webview* arg0, Sauce
 
 public enum SaucerState
 {
-   Started = 0,
-   Finished = 1,
+    Started = 0,
+    Finished = 1,
 }
 
 public enum SaucerStatus
 {
-   Andled = 0,
-   Nhandled = 1,
+    Handled = 0,
+    Unhandled = 1,
 }
 
 public enum SaucerScriptTime
 {
-   Creation = 0,
-   Ready = 1,
+    Creation = 0,
+    Ready = 1,
+}
+
+public enum SaucerWebviewEvent
+{
+    Permission = 0,
+    Fullscreen = 1,
+    DomReady = 2,
+    Navigated = 3,
+    Navigate = 4,
+    Message = 5,
+    Request = 6,
+    Favicon = 7,
+    Title = 8,
+    Load = 9,
 }
 
 internal struct saucer_webview { }
@@ -150,7 +164,7 @@ public unsafe partial class SaucerWebview
     internal static partial void saucer_webview_uninject(saucer_webview* arg0, nuint arg1);
 
     [LibraryImport(Consts.LibraryName, StringMarshalling = StringMarshalling.Utf8), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial void saucer_webview_handle_scheme(saucer_webview* arg0, string arg1, SaucerSchemeHandler arg2, IntPtr userdata);
+    internal static partial void saucer_webview_handle_scheme(saucer_webview* arg0, string arg1, SaucerSchemeHandlerRaw arg2, IntPtr userdata);
 
     [LibraryImport(Consts.LibraryName, StringMarshalling = StringMarshalling.Utf8), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     internal static partial void saucer_webview_remove_scheme(saucer_webview* arg0, string arg1);

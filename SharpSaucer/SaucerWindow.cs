@@ -6,36 +6,6 @@ using System.Text;
 
 namespace SharpSaucer;
 
-public enum SaucerWindowEdge
-{
-   Top = 1,
-   Bottom = 2,
-   Left = 4,
-   Right = 8,
-   BottomLeft = 6,
-   BottomRight = 10,
-   TopLeft = 5,
-   TopRight = 9,
-}
-
-public enum SaucerWindowDecoration
-{
-   None = 0,
-   Partial = 1,
-   Full = 2,
-}
-
-public enum SaucerWindowEvent
-{
-   Decorated = 0,
-   Maximize = 1,
-   Minimize = 2,
-   Closed = 3,
-   Resize = 4,
-   Focus = 5,
-   Close = 6,
-}
-
 public partial class SaucerWindow : IDisposable
 {
     internal unsafe saucer_window* Handle;
@@ -67,7 +37,7 @@ public partial class SaucerWindow : IDisposable
     }
     public SaucerIcon Icon
     {
-        set 
+        set
         {
             unsafe
             {
@@ -270,11 +240,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventDecorated callback = (_, decoration, _) => value.Invoke(this, decoration);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Decorated, ptr, true, nint.Zero);
                 }
@@ -282,7 +253,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -296,11 +267,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventMaximize callback = (_, maximized, _) => value.Invoke(this, maximized);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Maximize, ptr, true, nint.Zero);
                 }
@@ -308,7 +280,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -322,11 +294,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventMinimize callback = (_, minimized, _) => value.Invoke(this, minimized);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Minimize, ptr, true, nint.Zero);
                 }
@@ -334,7 +307,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -348,11 +321,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventClosed callback = (_, _) => value.Invoke(this);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Closed, ptr, true, nint.Zero);
                 }
@@ -360,7 +334,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -374,11 +348,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventResize callback = (_, width, height, _) => value.Invoke(this, width, height);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Resize, ptr, true, nint.Zero);
                 }
@@ -386,7 +361,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -400,11 +375,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventFocus callback = (_, focused, _) => value.Invoke(this, focused);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Focus, ptr, true, nint.Zero);
                 }
@@ -412,7 +388,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -426,11 +402,12 @@ public partial class SaucerWindow : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerWindowEventClose callback = (_, _) => value.Invoke(this);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Close, ptr, true, nint.Zero);
                 }
@@ -438,7 +415,7 @@ public partial class SaucerWindow : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -454,7 +431,7 @@ public partial class SaucerWindow : IDisposable
         unsafe
         {
             Handle = saucer_window_new(application.Handle, out var error);
-            if(error != 0)
+            if (error != 0)
                 throw new Exception($"Failed to create window. Error code: {error}");
         }
     }

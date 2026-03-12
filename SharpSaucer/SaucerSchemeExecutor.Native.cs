@@ -5,14 +5,14 @@ using System.Runtime.InteropServices;
 namespace SharpSaucer;
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-internal unsafe delegate void SaucerSchemeHandler(saucer_scheme_request* arg0, saucer_scheme_executor* arg1, IntPtr arg2);
+internal unsafe delegate void SaucerSchemeHandlerRaw(saucer_scheme_request* arg0, saucer_scheme_executor* arg1, IntPtr arg2);
 
 public enum SaucerSchemeError
 {
-   NotFound = 404,
-   Invalid = 400,
-   Denied = 401,
-   Failed = -1,
+    NotFound = 404,
+    Invalid = 400,
+    Denied = 401,
+    Failed = -1,
 }
 
 internal struct saucer_scheme_executor { }

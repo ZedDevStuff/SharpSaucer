@@ -25,6 +25,35 @@ internal unsafe delegate void SaucerWindowEventFocus(saucer_window* arg0, bool a
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal unsafe delegate SaucerPolicy SaucerWindowEventClose(saucer_window* arg0, IntPtr arg1);
 
+public enum SaucerWindowEdge
+{
+    Top = 1,
+    Bottom = 2,
+    Left = 4,
+    Right = 8,
+    BottomLeft = 6,
+    BottomRight = 10,
+    TopLeft = 5,
+    TopRight = 9,
+}
+
+public enum SaucerWindowDecoration
+{
+    None = 0,
+    Partial = 1,
+    Full = 2,
+}
+
+public enum SaucerWindowEvent
+{
+    Decorated = 0,
+    Maximize = 1,
+    Minimize = 2,
+    Closed = 3,
+    Resize = 4,
+    Focus = 5,
+    Close = 6,
+}
 
 internal struct saucer_window { }
 

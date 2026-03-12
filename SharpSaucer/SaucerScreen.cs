@@ -18,7 +18,7 @@ public partial class SaucerScreen : IDisposable
         {
             unsafe
             {
-                return new string((char*)saucer_screen_name(Handle));
+                return Marshal.PtrToStringAnsi(saucer_screen_name(Handle)) ?? "UNKNOWN";
             }
         }
     }

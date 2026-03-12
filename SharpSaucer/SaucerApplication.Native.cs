@@ -18,8 +18,13 @@ internal unsafe delegate void SaucerFinishCallback(saucer_application* arg0, Int
 
 public enum SaucerPolicy
 {
-   Allow = 0,
-   Block = 1,
+    Allow = 0,
+    Block = 1,
+}
+
+public enum SaucerApplicationEvent
+{
+    Quit = 0,
 }
 
 internal struct saucer_application { }
@@ -37,7 +42,7 @@ public unsafe partial class SaucerApplication
     internal static partial bool saucer_application_thread_safe(saucer_application* arg0);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial void saucer_application_screens(saucer_application* arg0, saucer_screen* arg1, ref nuint size);
+    internal static partial void saucer_application_screens(saucer_application* arg0, saucer_screen** arg1, ref nuint size);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     internal static partial void saucer_application_post(saucer_application* arg0, SaucerPostCallback arg1, IntPtr userdata);

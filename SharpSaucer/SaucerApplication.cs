@@ -4,11 +4,6 @@ using System.Runtime.InteropServices;
 
 namespace SharpSaucer;
 
-public enum SaucerApplicationEvent
-{
-   Quit = 0,
-}
-
 public partial class SaucerApplication : IDisposable
 {
     internal unsafe saucer_application* Handle;
@@ -20,11 +15,12 @@ public partial class SaucerApplication : IDisposable
     {
         add
         {
-            if(value != null && !_events.ContainsKey(value))
+            if (value != null && !_events.ContainsKey(value))
             {
                 unsafe
                 {
                     SaucerApplicationEventQuit callback = (_, _) => value.Invoke(this);
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_application_on(Handle, SaucerApplicationEvent.Quit, ptr, true, nint.Zero);
                 }
@@ -32,7 +28,7 @@ public partial class SaucerApplication : IDisposable
         }
         remove
         {
-            if(_events.TryGetValue(value, out var id))
+            if (_events.TryGetValue(value, out var id))
             {
                 unsafe
                 {
@@ -51,14 +47,14 @@ public partial class SaucerApplication : IDisposable
             {
                 nuint size = 0;
                 saucer_application_screens(Handle, null, ref size);
-                fixed(saucer_screen* buffer = new saucer_screen[size])
+                fixed (saucer_screen** buffer = new saucer_screen*[size])
                 {
                     int length = (int)size;
                     saucer_application_screens(Handle, buffer, ref size);
-                    var screens = new SaucerScreen[length];
-                    for(int i = 0; i < length; i++)
+                    SaucerScreen[] screens = new SaucerScreen[length];
+                    for (int i = 0; i < length; i++)
                     {
-                        screens[i] = new SaucerScreen(&buffer[i]);
+                        screens[i] = new SaucerScreen(buffer[i]);
                     }
                     return screens;
                 }
@@ -71,7 +67,7 @@ public partial class SaucerApplication : IDisposable
         unsafe
         {
             Handle = saucer_application_new(SaucerApplicationOptions.saucer_application_options_new(id), out var error);
-            if(error != 0)
+            if (error != 0)
                 throw new Exception($"Failed to create application. Error code: {error}");
         }
     }

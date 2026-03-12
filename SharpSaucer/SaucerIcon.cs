@@ -17,9 +17,9 @@ public partial class SaucerIcon : IDisposable
 
     internal static unsafe SaucerIcon FromHandle(nint handle)
     {
-        if(handle == 0)
+        if (handle == 0)
             return null;
-        if(Cache.TryGetValue(handle, out var icon))
+        if (Cache.TryGetValue(handle, out var icon))
             return icon;
         icon = new SaucerIcon((saucer_icon*)handle);
         Cache[handle] = icon;
