@@ -1,0 +1,136 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
+namespace SharpSaucer;
+
+public enum SaucerApplicationEvent
+{
+   Quit = 0,
+}
+
+public partial class SaucerApplication : IDisposable
+{
+    internal unsafe saucer_application* Handle;
+    private bool _disposedValue;
+
+    private readonly Dictionary<Delegate, nuint> _events = [];
+
+    public event Func<SaucerApplication, SaucerPolicy>? QuitRequested
+    {
+        add
+        {
+            if(value != null && !_events.ContainsKey(value))
+            {
+                unsafe
+                {
+                    SaucerApplicationEventQuit callback = (_, _) => value.Invoke(this);
+                    var ptr = Marshal.GetFunctionPointerForDelegate(callback);
+                    _events[value] = saucer_application_on(Handle, SaucerApplicationEvent.Quit, ptr, true, nint.Zero);
+                }
+            }
+        }
+        remove
+        {
+            if(_events.TryGetValue(value, out var id))
+            {
+                unsafe
+                {
+                    saucer_application_off(Handle, SaucerApplicationEvent.Quit, id);
+                }
+                _events.Remove(value);
+            }
+        }
+    }
+
+    public SaucerScreen[] Screens
+    {
+        get
+        {
+            unsafe
+            {
+                nuint size = 0;
+                saucer_application_screens(Handle, null, ref size);
+                fixed(saucer_screen* buffer = new saucer_screen[size])
+                {
+                    int length = (int)size;
+                    saucer_application_screens(Handle, buffer, ref size);
+                    var screens = new SaucerScreen[length];
+                    for(int i = 0; i < length; i++)
+                    {
+                        screens[i] = new SaucerScreen(&buffer[i]);
+                    }
+                    return screens;
+                }
+            }
+        }
+    }
+
+    public SaucerApplication(string id)
+    {
+        unsafe
+        {
+            Handle = saucer_application_new(SaucerApplicationOptions.saucer_application_options_new(id), out var error);
+            if(error != 0)
+                throw new Exception($"Failed to create application. Error code: {error}");
+        }
+    }
+
+    public void Post(Action action)
+    {
+        unsafe
+        {
+            SaucerPostCallback callback = _ => action();
+            saucer_application_post(Handle, callback, nint.Zero);
+        }
+    }
+
+    public int Run(Action<SaucerApplication> onRun, Action<SaucerApplication> onFinish)
+    {
+        unsafe
+        {
+            SaucerRunCallback runCb = (_, _) => onRun(this);
+            SaucerFinishCallback finishCb = (_, _) => onFinish(this);
+            return saucer_application_run(Handle, runCb, finishCb, nint.Zero);
+        }
+    }
+
+    public string Version
+    {
+        get
+        {
+            unsafe
+            {
+                return Marshal.PtrToStringAnsi(saucer_version()) ?? string.Empty;
+            }
+        }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects)
+            }
+
+            unsafe
+            {
+                saucer_application_free(Handle);
+            }
+            _disposedValue = true;
+        }
+    }
+
+    ~SaucerApplication()
+    {
+        Dispose(disposing: false);
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+}
