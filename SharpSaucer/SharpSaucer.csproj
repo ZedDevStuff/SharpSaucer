@@ -12,7 +12,7 @@
     <Version>8.0.4</Version>
     <Authors>ZedDevStuff</Authors>
     <Product>SharpSaucer</Product>
-    <Description>C# bindings for the cross platform C++ WebVeiw library Saucer</Description>
+    <Description>C# bindings for the cross platform C++ WebView library Saucer</Description>
     <PackageTags></PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
@@ -23,6 +23,13 @@
       <Pack>true</Pack>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SharpSaucerExample"/>
+    <Compile Remove="Native\**" />
+    <EmbeddedResource Remove="Native\**" />
+    <None Remove="Native\**" />
   </ItemGroup>
 
 </Project>

@@ -1,29 +1,29 @@
-﻿using System;
-using SharpSaucer;
+﻿using SharpSaucer;
+using System;
 
 namespace SharpSaucerExample
 {
-    internal class Program
+    internal unsafe class Program
     {
         [STAThread]
         static int Main(string[] args)
         {
-            using var app = new Application("sharp-saucer-example");
+            using var app = new SaucerApplication("sharp-saucer-example");
             return app.Run(
                 onRun: app =>
                 {
-                    var window = new Window(app)
+                    var window = new SaucerWindow(app)
                     {
                         Size = (900, 600),
                         MinSize = (400, 300),
                         Title = "SharpSaucer – Hello World!"
                     };
-                    var webview = new Webview(window)
+                    var webview = new SaucerWebview(window)
                     {
                         DevTools = true,
                         ContextMenu = true
                     };
-                    webview.SetUrl(new Url("https://saucer.app/"));
+                    webview.SetUrl("https://saucer.app/");
                     window.Show();
                 },
                 onFinish: app =>
