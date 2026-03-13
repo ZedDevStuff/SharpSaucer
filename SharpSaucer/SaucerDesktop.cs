@@ -1,3 +1,6 @@
 namespace SharpSaucer;
 
-public partial class SaucerDesktop { }
+public partial class SaucerDesktop 
+{
+
+}

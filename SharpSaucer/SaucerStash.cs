@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SharpSaucer;
 
@@ -6,6 +7,7 @@ public partial class SaucerStash : IDisposable
 {
     internal unsafe saucer_stash* Handle;
     private bool _disposedValue;
+    private static readonly Dictionary<nint, SaucerStash> Cache = [];
 
     public nuint Size
     {
@@ -32,10 +34,20 @@ public partial class SaucerStash : IDisposable
         }
     }
 
-    internal unsafe SaucerStash(saucer_stash* handle)
+    private unsafe SaucerStash(saucer_stash* handle)
     {
         Handle = handle;
+        Cache[(nint)handle] = this;
     }
+    internal static unsafe SaucerStash FromHandle(saucer_stash* handle)
+    {
+        if(handle == null || (nint)handle == nint.Zero)
+            throw new ArgumentNullException(nameof(handle));
+        return Cache.TryGetValue((nint)handle, out var cached) 
+            ? cached 
+            : new SaucerStash(handle);
+    }
+
 
     public SaucerStash Copy()
     {
@@ -70,6 +82,7 @@ public partial class SaucerStash : IDisposable
             }
             unsafe
             {
+                Cache.Remove((nint)Handle);
                 saucer_stash_free(Handle);
             }
             _disposedValue = true;

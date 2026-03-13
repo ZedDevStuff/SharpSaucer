@@ -230,7 +230,7 @@ public partial class SaucerWindow : IDisposable
         {
             unsafe
             {
-                return new SaucerScreen(saucer_window_screen(Handle));
+                return SaucerScreen.FromHandle(saucer_window_screen(Handle));
             }
         }
     }

@@ -10,6 +10,7 @@ public partial class SaucerWebview : IDisposable
 {
     internal unsafe saucer_webview* Handle;
     private bool _disposedValue;
+    private static readonly Dictionary<nint, SaucerWebview> Cache = [];
 
     public Color Background
     {
@@ -105,12 +106,13 @@ public partial class SaucerWebview : IDisposable
         {
             unsafe
             {
-                nuint length = 0;
-                saucer_webview_page_title(Handle, null, ref length);
-                fixed (sbyte* buffer = new sbyte[length])
+                nuint size = 0;
+                saucer_webview_page_title(Handle, null, ref size);
+                fixed (sbyte* buffer = new sbyte[size])
                 {
-                    saucer_webview_page_title(Handle, buffer, ref length);
-                    return new string(buffer, 0, (int)length, Encoding.UTF8);
+                    int length = (int)size;
+                    saucer_webview_page_title(Handle, buffer, ref size);
+                    return new string(buffer, 0, length, Encoding.UTF8);
                 }
             }
         }
@@ -125,7 +127,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventPermission callback = (_, request, _) => value.Invoke(this, new SaucerPermissionRequest(request));
+                    SaucerWebviewEventPermission callback = (_, request, _) => value.Invoke(this, SaucerPermissionRequest.FromHandle(request));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Permission, ptr, true, nint.Zero);
@@ -206,7 +208,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventNavigated callback = (_, url, _) => value.Invoke(this, new SaucerUrl(url));
+                    SaucerWebviewEventNavigated callback = (_, url, _) => value.Invoke(this, SaucerUrl.FromHandle(url));
                     GC.KeepAlive(callback); 
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Navigated, ptr, true, nint.Zero);
@@ -287,7 +289,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventRequest callback = (_, url, _) => value.Invoke(this, new SaucerUrl(url));
+                    SaucerWebviewEventRequest callback = (_, url, _) => value.Invoke(this, SaucerUrl.FromHandle(url));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Request, ptr, true, nint.Zero);
@@ -314,7 +316,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventFavicon callback = (_, icon, _) => value.Invoke(this, SaucerIcon.FromHandle((nint)icon));
+                    SaucerWebviewEventFavicon callback = (_, icon, _) => value.Invoke(this, SaucerIcon.FromHandle(icon));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Favicon, ptr, true, nint.Zero);
@@ -439,7 +441,7 @@ public partial class SaucerWebview : IDisposable
     {
         unsafe
         {
-            SaucerSchemeHandlerRaw callback = (request, executor, _) => handler(new(request), new(executor));
+            SaucerSchemeHandlerRaw callback = (request, executor, _) => handler(SaucerSchemeRequest.FromHandle(request), SaucerSchemeExecutor.FromHandle(executor));
             GC.KeepAlive(callback);
             saucer_webview_handle_scheme(Handle, scheme, callback, nint.Zero);
         }

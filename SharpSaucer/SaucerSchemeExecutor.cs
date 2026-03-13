@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SharpSaucer;
 
@@ -6,10 +7,20 @@ public partial class SaucerSchemeExecutor : IDisposable
 {
     internal unsafe saucer_scheme_executor* Handle;
     private bool _disposedValue;
+    private static readonly Dictionary<nint, SaucerSchemeExecutor> Cache = [];
 
-    internal unsafe SaucerSchemeExecutor(saucer_scheme_executor* handle)
+    private unsafe SaucerSchemeExecutor(saucer_scheme_executor* handle)
     {
         Handle = handle;
+        Cache[(nint)handle] = this;
+    }
+    internal static unsafe SaucerSchemeExecutor FromHandle(saucer_scheme_executor* handle)
+    {
+        if(handle == null || (nint)handle == nint.Zero)
+            throw new ArgumentNullException(nameof(handle));
+        return Cache.TryGetValue((nint)handle, out var cached) 
+            ? cached 
+            : new SaucerSchemeExecutor(handle);
     }
 
     public void Accept(SaucerSchemeResponse response)
@@ -45,6 +56,7 @@ public partial class SaucerSchemeExecutor : IDisposable
             }
             unsafe
             {
+                Cache.Remove((nint)Handle);
                 saucer_scheme_executor_free(Handle);
             }
             _disposedValue = true;

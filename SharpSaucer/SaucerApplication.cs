@@ -54,7 +54,7 @@ public partial class SaucerApplication : IDisposable
                     SaucerScreen[] screens = new SaucerScreen[length];
                     for (int i = 0; i < length; i++)
                     {
-                        screens[i] = new SaucerScreen(buffer[i]);
+                        screens[i] = SaucerScreen.FromHandle(buffer[i]);
                     }
                     return screens;
                 }

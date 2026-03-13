@@ -13,17 +13,16 @@ public partial class SaucerIcon : IDisposable
     private unsafe SaucerIcon(saucer_icon* handle)
     {
         Handle = handle;
+        Cache[(nint)handle] = this;
     }
 
-    internal static unsafe SaucerIcon FromHandle(nint handle)
+    internal static unsafe SaucerIcon FromHandle(saucer_icon* handle)
     {
-        if (handle == 0)
-            return null;
-        if (Cache.TryGetValue(handle, out var icon))
-            return icon;
-        icon = new SaucerIcon((saucer_icon*)handle);
-        Cache[handle] = icon;
-        return icon;
+        if (handle == null || (nint)handle == nint.Zero)
+            throw new ArgumentNullException(nameof(handle));
+        return Cache.TryGetValue((nint)handle, out var cached) 
+            ? cached 
+            : new SaucerIcon(handle);
     }
 
     protected virtual void Dispose(bool disposing)
@@ -36,6 +35,7 @@ public partial class SaucerIcon : IDisposable
             }
             unsafe
             {
+                Cache.Remove((nint)Handle);
                 saucer_icon_free(Handle);
             }
             _disposedValue = true;
