@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -7,24 +8,47 @@ namespace SharpSaucer;
 
 internal struct saucer_scheme_request { }
 
+
+internal sealed class SaucerSchemeRequestHandle : SafeHandle
+{
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+    public SaucerSchemeRequestHandle(IntPtr handle) : base(handle, true)
+    {
+    }
+
+    public SaucerSchemeRequestHandle() : base(IntPtr.Zero, true)
+    {
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        if (!IsInvalid)
+        {
+            SaucerSchemeRequest.saucer_scheme_request_free(this);
+        }
+        return true;
+    }
+}
+
 public unsafe partial class SaucerSchemeRequest
 {
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial void saucer_scheme_request_free(saucer_scheme_request* arg0);
+    internal static partial void saucer_scheme_request_free(SaucerSchemeRequestHandle arg0);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial saucer_scheme_request* saucer_scheme_request_copy(saucer_scheme_request* arg0);
+    internal static partial SaucerSchemeRequestHandle saucer_scheme_request_copy(SaucerSchemeRequestHandle arg0);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial saucer_url* saucer_scheme_request_url(saucer_scheme_request* arg0);
+    internal static partial SaucerUrlHandle saucer_scheme_request_url(SaucerSchemeRequestHandle arg0);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial void saucer_scheme_request_method(saucer_scheme_request* arg0, sbyte* arg1, ref nuint arg2);
+    internal static partial void saucer_scheme_request_method(SaucerSchemeRequestHandle arg0, sbyte* arg1, ref nuint arg2);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial saucer_stash* saucer_scheme_request_content(saucer_scheme_request* arg0);
+    internal static partial SaucerStashHandle saucer_scheme_request_content(SaucerSchemeRequestHandle arg0);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial void saucer_scheme_request_headers(saucer_scheme_request* arg0, sbyte* arg1, ref nuint arg2);
+    internal static partial void saucer_scheme_request_headers(SaucerSchemeRequestHandle arg0, sbyte* arg1, ref nuint arg2);
 
 }

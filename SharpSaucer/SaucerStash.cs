@@ -1,13 +1,12 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace SharpSaucer;
 
 public partial class SaucerStash : IDisposable
 {
-    internal unsafe saucer_stash* Handle;
-    private bool _disposedValue;
-    private static readonly Dictionary<nint, SaucerStash> Cache = [];
+    internal SaucerStashHandle Handle;
 
     public nuint Size
     {
@@ -34,21 +33,10 @@ public partial class SaucerStash : IDisposable
         }
     }
 
-    private unsafe SaucerStash(saucer_stash* handle)
+    internal SaucerStash(SaucerStashHandle handle)
     {
         Handle = handle;
-        Cache[(nint)handle] = this;
     }
-    internal static unsafe SaucerStash FromHandle(saucer_stash* handle)
-    {
-        if(handle == null || (nint)handle == nint.Zero)
-            throw new ArgumentNullException(nameof(handle));
-        return Cache.TryGetValue((nint)handle, out var cached) 
-            ? cached 
-            : new SaucerStash(handle);
-    }
-
-
     public SaucerStash Copy()
     {
         unsafe
@@ -72,32 +60,8 @@ public partial class SaucerStash : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-            unsafe
-            {
-                Cache.Remove((nint)Handle);
-                saucer_stash_free(Handle);
-            }
-            _disposedValue = true;
-        }
-    }
-
-    // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-    ~SaucerStash()
-    {
-        Dispose(disposing: false);
-    }
-
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        Handle.Dispose();
     }
 }

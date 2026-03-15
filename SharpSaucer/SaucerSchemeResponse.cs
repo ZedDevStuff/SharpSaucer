@@ -1,13 +1,12 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace SharpSaucer;
 
 public partial class SaucerSchemeResponse : IDisposable
 {
-    internal unsafe saucer_scheme_response* Handle;
-    private bool _disposedValue;
-    private static readonly Dictionary<nint, SaucerSchemeResponse> Cache = [];
+    internal SaucerSchemeResponseHandle Handle;
 
     public int Status
     {
@@ -20,19 +19,11 @@ public partial class SaucerSchemeResponse : IDisposable
         }
     }
 
-    private unsafe SaucerSchemeResponse(saucer_scheme_response* handle)
+    internal SaucerSchemeResponse(SaucerSchemeResponseHandle handle)
     {
         Handle = handle;
-        Cache[(nint)handle] = this;
     }
-    internal static unsafe SaucerSchemeResponse FromHandle(saucer_scheme_response* handle)
-    {
-        if(handle == null || (nint)handle == nint.Zero)
-            throw new ArgumentNullException(nameof(handle));
-        return Cache.TryGetValue((nint)handle, out var cached) 
-            ? cached 
-            : new SaucerSchemeResponse(handle);
-    }
+
     public SaucerSchemeResponse(SaucerStash stash, string mime)
     {
         unsafe
@@ -49,31 +40,8 @@ public partial class SaucerSchemeResponse : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-            unsafe
-            {
-                Cache.Remove((nint)Handle);
-                saucer_scheme_response_free(Handle);
-            }
-            _disposedValue = true;
-        }
-    }
-
-    ~SaucerSchemeResponse()
-    {
-        Dispose(disposing: false);
-    }
-
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        Handle.Dispose();
     }
 }

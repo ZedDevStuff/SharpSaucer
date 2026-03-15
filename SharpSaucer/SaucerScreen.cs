@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -7,9 +8,7 @@ namespace SharpSaucer;
 
 public partial class SaucerScreen : IDisposable
 {
-    internal unsafe saucer_screen* Handle;
-    private bool _disposedValue;
-    private static readonly Dictionary<nint, SaucerScreen> Cache = [];
+    internal SaucerScreenHandle Handle;
 
     /// <summary>
     /// WARNING: This does not work currently
@@ -50,45 +49,13 @@ public partial class SaucerScreen : IDisposable
         }
     }
 
-    private unsafe SaucerScreen(saucer_screen* handle)
+    internal SaucerScreen(SaucerScreenHandle handle)
     {
         Handle = handle;
-        Cache[(nint)handle] = this;
-    }
-    internal static unsafe SaucerScreen FromHandle(saucer_screen* handle)
-    {
-        if(handle == null || (nint)handle == nint.Zero)
-            throw new ArgumentNullException(nameof(handle));
-        return Cache.TryGetValue((nint)handle, out var cached) 
-            ? cached 
-            : new SaucerScreen(handle);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-            unsafe
-            {
-                Cache.Remove((nint)Handle);
-                saucer_screen_free(Handle);
-            }
-            _disposedValue = true;
-        }
-    }
-
-    ~SaucerScreen()
-    {
-        Dispose(disposing: false);
     }
 
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        Handle.Dispose();
     }
 }

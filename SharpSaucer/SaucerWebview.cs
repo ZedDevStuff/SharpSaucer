@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -8,9 +9,9 @@ namespace SharpSaucer;
 
 public partial class SaucerWebview : IDisposable
 {
-    internal unsafe saucer_webview* Handle;
+    internal SaucerWebviewHandle Handle;
     private bool _disposedValue;
-    private static readonly Dictionary<nint, SaucerWebview> Cache = [];
+    private static readonly ConcurrentDictionary<nint, SaucerWebview> Cache = [];
 
     public Color Background
     {
@@ -127,7 +128,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventPermission callback = (_, request, _) => value.Invoke(this, SaucerPermissionRequest.FromHandle(request));
+                    SaucerWebviewEventPermissionNative callback = (_, request, _) => value.Invoke(this, new SaucerPermissionRequest(new((nint)request)));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Permission, ptr, true, nint.Zero);
@@ -154,7 +155,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventFullscreen callback = (_, fullscreen, _) => value.Invoke(this, fullscreen);
+                    SaucerWebviewEventFullscreenNative callback = (_, fullscreen, _) => value.Invoke(this, fullscreen);
                     GC.KeepAlive(callback); 
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Fullscreen, ptr, true, nint.Zero);
@@ -181,7 +182,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventDomReady callback = (_, _) => value.Invoke(this);
+                    SaucerWebviewEventDomReadyNative callback = (_, _) => value.Invoke(this);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.DomReady, ptr, true, nint.Zero);
@@ -208,7 +209,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventNavigated callback = (_, url, _) => value.Invoke(this, SaucerUrl.FromHandle(url));
+                    SaucerWebviewEventNavigatedNative callback = (_, url, _) => value.Invoke(this, new SaucerUrl(new((nint)url)));
                     GC.KeepAlive(callback); 
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Navigated, ptr, true, nint.Zero);
@@ -235,7 +236,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventNavigate callback = (_, navigation, _) => value.Invoke(this, new SaucerNavigation(navigation));
+                    SaucerWebviewEventNavigateNative callback = (_, navigation, _) => value.Invoke(this, new SaucerNavigation(navigation));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Navigate, ptr, true, nint.Zero);
@@ -262,7 +263,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventMessage callback = (_, message, _, _) => value.Invoke(this, message);
+                    SaucerWebviewEventMessageNative callback = (_, message, _, _) => value.Invoke(this, message);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Message, ptr, true, nint.Zero);
@@ -289,7 +290,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventRequest callback = (_, url, _) => value.Invoke(this, SaucerUrl.FromHandle(url));
+                    SaucerWebviewEventRequestNative callback = (_, url, _) => value.Invoke(this, new SaucerUrl(new((nint)url)));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Request, ptr, true, nint.Zero);
@@ -316,7 +317,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventFavicon callback = (_, icon, _) => value.Invoke(this, SaucerIcon.FromHandle(icon));
+                    SaucerWebviewEventFaviconNative callback = (_, icon, _) => value.Invoke(this, new SaucerIcon(new((nint)icon)));
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Favicon, ptr, true, nint.Zero);
@@ -343,7 +344,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventTitle callback = (_, title, _, _) => value.Invoke(this, title);
+                    SaucerWebviewEventTitleNative callback = (_, title, _, _) => value.Invoke(this, title);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Title, ptr, true, nint.Zero);
@@ -370,7 +371,7 @@ public partial class SaucerWebview : IDisposable
             {
                 unsafe
                 {
-                    SaucerWebviewEventLoad callback = (_, state, _) => value.Invoke(this, state);
+                    SaucerWebviewEventLoadNative callback = (_, state, _) => value.Invoke(this, state);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Load, ptr, true, nint.Zero);
@@ -441,7 +442,7 @@ public partial class SaucerWebview : IDisposable
     {
         unsafe
         {
-            SaucerSchemeHandlerRaw callback = (request, executor, _) => handler(SaucerSchemeRequest.FromHandle(request), SaucerSchemeExecutor.FromHandle(executor));
+            SaucerSchemeHandlerNative callback = (request, executor, _) => handler(new SaucerSchemeRequest(new((nint)request)), new SaucerSchemeExecutor(new((nint)executor)));
             GC.KeepAlive(callback);
             saucer_webview_handle_scheme(Handle, scheme, callback, nint.Zero);
         }

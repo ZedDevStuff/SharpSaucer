@@ -12,7 +12,7 @@ public partial class SaucerNavigation
         {
             unsafe
             {
-                return SaucerUrl.FromHandle(saucer_navigation_url(Handle));
+                return new SaucerUrl(saucer_navigation_url(Handle));
             }
         }
     }

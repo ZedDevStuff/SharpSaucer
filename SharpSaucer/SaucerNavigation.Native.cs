@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -7,10 +8,11 @@ namespace SharpSaucer;
 
 internal struct saucer_navigation { }
 
+
 public unsafe partial class SaucerNavigation
 {
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    internal static partial saucer_url* saucer_navigation_url(saucer_navigation* arg0);
+    internal static partial SaucerUrlHandle saucer_navigation_url(saucer_navigation* arg0);
 
     [LibraryImport(Consts.LibraryName), UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     [return: MarshalAs(UnmanagedType.U1)]

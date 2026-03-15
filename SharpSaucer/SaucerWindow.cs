@@ -8,7 +8,7 @@ namespace SharpSaucer;
 
 public partial class SaucerWindow : IDisposable
 {
-    internal unsafe saucer_window* Handle;
+    internal SaucerWindowHandle Handle;
     private bool _disposedValue;
 
     public string Title
@@ -230,7 +230,7 @@ public partial class SaucerWindow : IDisposable
         {
             unsafe
             {
-                return SaucerScreen.FromHandle(saucer_window_screen(Handle));
+                return new SaucerScreen(saucer_window_screen(Handle));
             }
         }
     }
@@ -244,7 +244,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventDecorated callback = (_, decoration, _) => value.Invoke(this, decoration);
+                    SaucerWindowEventDecoratedNative callback = (_, decoration, _) => value.Invoke(this, decoration);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Decorated, ptr, true, nint.Zero);
@@ -271,7 +271,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventMaximize callback = (_, maximized, _) => value.Invoke(this, maximized);
+                    SaucerWindowEventMaximizeNative callback = (_, maximized, _) => value.Invoke(this, maximized);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Maximize, ptr, true, nint.Zero);
@@ -298,7 +298,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventMinimize callback = (_, minimized, _) => value.Invoke(this, minimized);
+                    SaucerWindowEventMinimizeNative callback = (_, minimized, _) => value.Invoke(this, minimized);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Minimize, ptr, true, nint.Zero);
@@ -325,7 +325,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventClosed callback = (_, _) => value.Invoke(this);
+                    SaucerWindowEventClosedNative callback = (_, _) => value.Invoke(this);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Closed, ptr, true, nint.Zero);
@@ -352,7 +352,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventResize callback = (_, width, height, _) => value.Invoke(this, width, height);
+                    SaucerWindowEventResizeNative callback = (_, width, height, _) => value.Invoke(this, width, height);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Resize, ptr, true, nint.Zero);
@@ -379,7 +379,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventFocus callback = (_, focused, _) => value.Invoke(this, focused);
+                    SaucerWindowEventFocusNative callback = (_, focused, _) => value.Invoke(this, focused);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Focus, ptr, true, nint.Zero);
@@ -406,7 +406,7 @@ public partial class SaucerWindow : IDisposable
             {
                 unsafe
                 {
-                    SaucerWindowEventClose callback = (_, _) => value.Invoke(this);
+                    SaucerWindowEventCloseNative callback = (_, _) => value.Invoke(this);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_window_on(Handle, SaucerWindowEvent.Close, ptr, true, nint.Zero);

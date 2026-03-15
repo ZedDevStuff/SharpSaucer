@@ -6,7 +6,8 @@ namespace SharpSaucer;
 
 public partial class SaucerApplication : IDisposable
 {
-    internal unsafe saucer_application* Handle;
+    internal SaucerApplicationHandle Handle;
+    internal SaucerApplicationOptionsHandle OptionsHandle;
     private bool _disposedValue;
 
     private readonly Dictionary<Delegate, nuint> _events = [];
@@ -19,7 +20,7 @@ public partial class SaucerApplication : IDisposable
             {
                 unsafe
                 {
-                    SaucerApplicationEventQuit callback = (_, _) => value.Invoke(this);
+                    SaucerApplicationEventQuitNative callback = (_, _) => value.Invoke(this);
                     GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_application_on(Handle, SaucerApplicationEvent.Quit, ptr, true, nint.Zero);
@@ -54,7 +55,7 @@ public partial class SaucerApplication : IDisposable
                     SaucerScreen[] screens = new SaucerScreen[length];
                     for (int i = 0; i < length; i++)
                     {
-                        screens[i] = SaucerScreen.FromHandle(buffer[i]);
+                        screens[i] = new SaucerScreen(new((nint)buffer[i]));
                     }
                     return screens;
                 }
@@ -66,7 +67,8 @@ public partial class SaucerApplication : IDisposable
     {
         unsafe
         {
-            Handle = saucer_application_new(SaucerApplicationOptions.saucer_application_options_new(id), out var error);
+            OptionsHandle = SaucerApplicationOptions.saucer_application_options_new(id);
+            Handle = saucer_application_new(OptionsHandle, out var error);
             if (error != 0)
                 throw new Exception($"Failed to create application. Error code: {error}");
         }
@@ -76,7 +78,7 @@ public partial class SaucerApplication : IDisposable
     {
         unsafe
         {
-            SaucerPostCallback callback = _ => action();
+            SaucerPostCallbackNative callback = _ => action();
             saucer_application_post(Handle, callback, nint.Zero);
         }
     }
@@ -85,8 +87,8 @@ public partial class SaucerApplication : IDisposable
     {
         unsafe
         {
-            SaucerRunCallback runCb = (_, _) => onRun(this);
-            SaucerFinishCallback finishCb = (_, _) => onFinish(this);
+            SaucerRunCallbackNative runCb = (_, _) => onRun(this);
+            SaucerFinishCallbackNative finishCb = (_, _) => onFinish(this);
             return saucer_application_run(Handle, runCb, finishCb, nint.Zero);
         }
     }
