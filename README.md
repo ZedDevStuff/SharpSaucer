@@ -1,1 +1,3 @@
-# TODO: Make an actual README.md
+# SharpSaucer
+
+C# bindings for Saucer, the cross platform C++ WebView library
