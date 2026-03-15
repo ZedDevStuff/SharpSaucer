@@ -7,8 +7,8 @@ namespace SharpSaucer;
 
 public enum SaucerPdfLayout
 {
-   Portrait = 0,
-   Landscape = 1,
+    Portrait = 0,
+    Landscape = 1,
 }
 
 internal struct saucer_pdf { }

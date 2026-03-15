@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -10,8 +9,6 @@ namespace SharpSaucer;
 public partial class SaucerWebview : IDisposable
 {
     internal SaucerWebviewHandle Handle;
-    private bool _disposedValue;
-    private static readonly ConcurrentDictionary<nint, SaucerWebview> Cache = [];
 
     public Color Background
     {
@@ -156,7 +153,7 @@ public partial class SaucerWebview : IDisposable
                 unsafe
                 {
                     SaucerWebviewEventFullscreenNative callback = (_, fullscreen, _) => value.Invoke(this, fullscreen);
-                    GC.KeepAlive(callback); 
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Fullscreen, ptr, true, nint.Zero);
                 }
@@ -210,7 +207,7 @@ public partial class SaucerWebview : IDisposable
                 unsafe
                 {
                     SaucerWebviewEventNavigatedNative callback = (_, url, _) => value.Invoke(this, new SaucerUrl(new((nint)url)));
-                    GC.KeepAlive(callback); 
+                    GC.KeepAlive(callback);
                     var ptr = Marshal.GetFunctionPointerForDelegate(callback);
                     _events[value] = saucer_webview_on(Handle, SaucerWebviewEvent.Navigated, ptr, true, nint.Zero);
                 }
@@ -511,30 +508,8 @@ public partial class SaucerWebview : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-            unsafe
-            {
-                saucer_webview_free(Handle);
-            }
-            _disposedValue = true;
-        }
-    }
-
-    ~SaucerWebview()
-    {
-        Dispose(disposing: false);
-    }
-
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        Handle.Dispose();
     }
 }

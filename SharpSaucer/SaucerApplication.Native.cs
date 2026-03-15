@@ -18,13 +18,13 @@ internal unsafe delegate void SaucerFinishCallbackNative(saucer_application* arg
 
 public enum SaucerPolicy
 {
-   Allow = 0,
-   Block = 1,
+    Allow = 0,
+    Block = 1,
 }
 
 public enum SaucerApplicationEvent
 {
-   Quit = 0,
+    Quit = 0,
 }
 
 internal struct saucer_application { }

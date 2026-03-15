@@ -63,7 +63,7 @@ public partial class SaucerUrl : IDisposable
             {
                 nuint size = 0;
                 saucer_url_path(Handle, null, ref size);
-                fixed(sbyte* buffer = new sbyte[size])
+                fixed (sbyte* buffer = new sbyte[size])
                 {
                     int length = (int)size;
                     saucer_url_path(Handle, buffer, ref size);
@@ -72,7 +72,7 @@ public partial class SaucerUrl : IDisposable
             }
         }
     }
-    
+
 
     internal SaucerUrl(SaucerUrlHandle handle)
     {
@@ -85,7 +85,7 @@ public partial class SaucerUrl : IDisposable
         {
             nuint size = 0;
             saucer_url_string(Handle, null, ref size);
-            fixed(sbyte* buffer = new sbyte[size])
+            fixed (sbyte* buffer = new sbyte[size])
             {
                 int length = (int)size;
                 saucer_url_string(Handle, buffer, ref size);
@@ -107,14 +107,14 @@ public partial class SaucerUrl : IDisposable
         unsafe
         {
             var handle = saucer_url_new_parse(url, out int error);
-            if(error != 0)
+            if (error != 0)
                 throw new ArgumentException($"Failed to parse URL: {url}");
             return new SaucerUrl(handle);
         }
     }
     public static SaucerUrl FromFile(string path)
     {
-        if(!File.Exists(path) || !Directory.Exists(path))
+        if (!File.Exists(path) || !Directory.Exists(path))
             throw new ArgumentException($"Given path does not exist: {path}");
         unsafe
         {

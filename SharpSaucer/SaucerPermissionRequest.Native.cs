@@ -7,15 +7,15 @@ namespace SharpSaucer;
 
 public enum SaucerPermissionType
 {
-   Unknown = 0,
-   AudioMedia = 1,
-   VideoMedia = 2,
-   DesktopMedia = 4,
-   MouseLock = 8,
-   DeviceInfo = 16,
-   Location = 32,
-   Clipboard = 64,
-   Notification = 128,
+    Unknown = 0,
+    AudioMedia = 1,
+    VideoMedia = 2,
+    DesktopMedia = 4,
+    MouseLock = 8,
+    DeviceInfo = 16,
+    Location = 32,
+    Clipboard = 64,
+    Notification = 128,
 }
 
 internal struct saucer_permission_request { }

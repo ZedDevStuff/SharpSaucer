@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Text;
 
 namespace SharpSaucer;
@@ -21,13 +19,13 @@ public partial class SaucerSchemeRequest : IDisposable
     }
     public string Headers
     {
-        get 
+        get
         {
             unsafe
             {
                 nuint size = 0;
                 saucer_scheme_request_headers(Handle, null, ref size);
-                fixed(sbyte* buffer = new sbyte[size])
+                fixed (sbyte* buffer = new sbyte[size])
                 {
                     int length = (int)size;
                     saucer_scheme_request_headers(Handle, buffer, ref size);
@@ -44,7 +42,7 @@ public partial class SaucerSchemeRequest : IDisposable
             {
                 nuint size = 0;
                 saucer_scheme_request_method(Handle, null, ref size);
-                fixed(sbyte* buffer = new sbyte[size])
+                fixed (sbyte* buffer = new sbyte[size])
                 {
                     int length = (int)size;
                     saucer_scheme_request_method(Handle, buffer, ref size);

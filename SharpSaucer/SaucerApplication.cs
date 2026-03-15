@@ -8,7 +8,6 @@ public partial class SaucerApplication : IDisposable
 {
     internal SaucerApplicationHandle Handle;
     internal SaucerApplicationOptionsHandle OptionsHandle;
-    private bool _disposedValue;
 
     private readonly Dictionary<Delegate, nuint> _events = [];
 
@@ -93,6 +92,12 @@ public partial class SaucerApplication : IDisposable
         }
     }
 
+    public void Dispose()
+    {
+        Handle.Dispose();
+        OptionsHandle.Dispose();
+    }
+
     public string Version
     {
         get
@@ -102,33 +107,5 @@ public partial class SaucerApplication : IDisposable
                 return Marshal.PtrToStringAnsi(saucer_version()) ?? string.Empty;
             }
         }
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-
-            unsafe
-            {
-                saucer_application_free(Handle);
-            }
-            _disposedValue = true;
-        }
-    }
-
-    ~SaucerApplication()
-    {
-        Dispose(disposing: false);
-    }
-
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
     }
 }

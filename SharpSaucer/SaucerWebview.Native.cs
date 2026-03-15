@@ -36,34 +36,34 @@ internal unsafe delegate void SaucerWebviewEventLoadNative(saucer_webview* arg0,
 
 public enum SaucerState
 {
-   Started = 0,
-   Finished = 1,
+    Started = 0,
+    Finished = 1,
 }
 
 public enum SaucerStatus
 {
-   Handled = 0,
-   Unhandled = 1,
+    Handled = 0,
+    Unhandled = 1,
 }
 
 public enum SaucerScriptTime
 {
-   Creation = 0,
-   Ready = 1,
+    Creation = 0,
+    Ready = 1,
 }
 
 public enum SaucerWebviewEvent
 {
-   Permission = 0,
-   Fullscreen = 1,
-   DomReady = 2,
-   Navigated = 3,
-   Navigate = 4,
-   Message = 5,
-   Request = 6,
-   Favicon = 7,
-   Title = 8,
-   Load = 9,
+    Permission = 0,
+    Fullscreen = 1,
+    DomReady = 2,
+    Navigated = 3,
+    Navigate = 4,
+    Message = 5,
+    Request = 6,
+    Favicon = 7,
+    Title = 8,
+    Load = 9,
 }
 
 internal struct saucer_webview { }

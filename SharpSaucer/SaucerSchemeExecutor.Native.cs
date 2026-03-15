@@ -9,10 +9,10 @@ internal unsafe delegate void SaucerSchemeHandlerNative(saucer_scheme_request* a
 
 public enum SaucerSchemeError
 {
-   NotFound = 404,
-   Invalid = 400,
-   Denied = 401,
-   Failed = -1,
+    NotFound = 404,
+    Invalid = 400,
+    Denied = 401,
+    Failed = -1,
 }
 
 internal struct saucer_scheme_executor { }

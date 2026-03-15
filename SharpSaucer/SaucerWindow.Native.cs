@@ -27,32 +27,32 @@ internal unsafe delegate SaucerPolicy SaucerWindowEventCloseNative(saucer_window
 
 public enum SaucerWindowEdge
 {
-   Top = 1,
-   Bottom = 2,
-   Left = 4,
-   Right = 8,
-   BottomLeft = 6,
-   BottomRight = 10,
-   TopLeft = 5,
-   TopRight = 9,
+    Top = 1,
+    Bottom = 2,
+    Left = 4,
+    Right = 8,
+    BottomLeft = 6,
+    BottomRight = 10,
+    TopLeft = 5,
+    TopRight = 9,
 }
 
 public enum SaucerWindowDecoration
 {
-   None = 0,
-   Partial = 1,
-   Full = 2,
+    None = 0,
+    Partial = 1,
+    Full = 2,
 }
 
 public enum SaucerWindowEvent
 {
-   Decorated = 0,
-   Maximize = 1,
-   Minimize = 2,
-   Closed = 3,
-   Resize = 4,
-   Focus = 5,
-   Close = 6,
+    Decorated = 0,
+    Maximize = 1,
+    Minimize = 2,
+    Closed = 3,
+    Resize = 4,
+    Focus = 5,
+    Close = 6,
 }
 
 internal struct saucer_window { }

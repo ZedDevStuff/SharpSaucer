@@ -9,7 +9,6 @@ namespace SharpSaucer;
 public partial class SaucerWindow : IDisposable
 {
     internal SaucerWindowHandle Handle;
-    private bool _disposedValue;
 
     public string Title
     {
@@ -467,30 +466,8 @@ public partial class SaucerWindow : IDisposable
         }
     }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                // TODO: dispose managed state (managed objects)
-            }
-            unsafe
-            {
-                saucer_window_free(Handle);
-            }
-            _disposedValue = true;
-        }
-    }
-
-    ~SaucerWindow()
-    {
-        Dispose(disposing: false);
-    }
-
     public void Dispose()
     {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        Handle.Dispose();
     }
 }
